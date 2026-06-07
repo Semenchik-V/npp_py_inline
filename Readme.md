@@ -158,14 +158,3 @@ The `_math_` library is loaded into the environment automatically.
 ## 📝 License
 
 The project is distributed under the MIT License. See the [LICENSE](./LICENSE) file for details. You are free to use, modify, and distribute this code.
-
----
-
-## 🔗 Useful Links
-
-- [Script for Python 3](npp_py_inline3.py)
-- [Script for Python 2](npp_py_inline2.py)
-- [Examples for Python 3](examples3.md)
-- [Examples for Python 2](examples2.md)
-- [Demonstration](npp_py_inline.gif)
-- [Russian version of README](README.ru.md)
