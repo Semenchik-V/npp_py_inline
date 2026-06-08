@@ -2,6 +2,8 @@
 ## NppPyInline: Python Inline Execution Environment for Notepad++
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
+**NppPyInline** — a calculator with variables and a Python runtime, right inside Notepad++
+
 **NppPyInline** is an embeddable tool that transforms the Notepad++ text editor into an inline calculation environment. It allows you to execute Python code directly inside the Scintilla text buffer with instant output and updating of results on the same lines or in a specifically designated area.
 
 You write code directly in the text, run the script, and get the calculation result. If you fix an error or change the initial data — restart the script, and the results are updated. Unlike a standard console, the code is typed once, saved in a file, and you can work with it for as long as needed.
