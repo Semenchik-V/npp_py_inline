@@ -42,7 +42,7 @@ _end_
 
 ```
 
-Example 2: Using long strings
+**Example 2: Using long strings**
 A backslash allows you to break a long string into several shorter lines.
 ```python
 _beg_
