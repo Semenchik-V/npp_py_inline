@@ -322,53 +322,125 @@ def smart_calc_main():
     try:
         in_multi_comment = False
         
-        for i in range(start_line, end_line):
+        # ЗАМЕНА 1: Переход на цикл while для ручного управления указателем строк
+        i = start_line
+        while i < end_line:
             if i >= editor.getLineCount(): break 
             
-            full_raw_line = editor.getLine(i).rstrip('\r\n')
+            line_text = editor.getLine(i).rstrip('\r\n')
             
             # Обработка многострочных комментариев
-            if '"""' in full_raw_line:
-                if full_raw_line.count('"""') < 2: in_multi_comment = not in_multi_comment
+            if '"""' in line_text:
+                if line_text.count('"""') < 2: in_multi_comment = not in_multi_comment
+                i += 1
                 continue
-            if in_multi_comment: continue
+            if in_multi_comment: 
+                i += 1
+                continue
 
+            # ЗАМЕНА 2: Сборка многострочного выражения (Virtual Line Collapse)
+            raw_lines = [line_text]
+            clean_line = line_text.strip()
+            
+            # Если строка заканчивается на \ забираем следующие строки
+            while clean_line.endswith('\\') and i + 1 < end_line:
+                i += 1
+                next_line_text = editor.getLine(i).rstrip('\r\n')
+                raw_lines.append(next_line_text)
+                clean_line = next_line_text.strip()
+
+            is_multiline = len(raw_lines) > 1
+            
+            # Подготовка единой строки для парсера
+            if not is_multiline:
+                full_raw_line = raw_lines[0]
+            else:
+                parts = []
+                for idx, rl in enumerate(raw_lines):
+                    if idx < len(raw_lines) - 1:
+                        r_idx = rl.rfind('\\')
+                        parts.append(rl[:r_idx] if r_idx != -1 else rl)
+                    else:
+                        parts.append(rl)
+                full_raw_line = " ".join(parts)
+
+            # Парсинг склеенной строки
             parsed = CodeParser.parse(full_raw_line)
-            if not parsed: continue
+            if not parsed: 
+                i += 1
+                continue
 
             # Системные команды
             if parsed["cmd"] in ['_help_', '_man_']:
                 query = parsed["cmd_parts"][1].lower() if len(parsed["cmd_parts"]) > 1 else 'all'
                 show_smart_help(query, engine.scope, mode=parsed["cmd"])
+                i += 1
                 continue 
 
             # Основной вычислительный процесс
             try:
+                # ЗАМЕНА 3: Запрет инспектора в многострочных блоках
+                if is_multiline and parsed["is_inspector"]:
+                    raise SyntaxError("Оператор '?' запрещен в многострочных выражениях. Используйте out()")
+
                 result, actual_formula = engine.evaluate(parsed["raw_formula"])
                 
                 if parsed["var_part"]:
                     engine.execute_assignment(parsed["var_part"], result)
 
-                new_code = ResultFormatter.format(parsed, result, actual_formula, engine)
-                
-                editor.setSel(editor.positionFromLine(i), editor.getLineEndPosition(i))
-                editor.replaceSel(new_code + parsed["comment_str"])
+                # ЗАМЕНА 4: Вывод результата без разрушения исходного форматирования длинных строк
+                if is_multiline:
+                    # В многострочном режиме просто очищаем последнюю строку от возможных старых ошибок
+                    last_line_parsed = CodeParser.parse(raw_lines[-1])
+                    if last_line_parsed:
+                        clean_last = last_line_parsed["code_part"] + last_line_parsed["comment_str"]
+                    else:
+                        clean_last = re.sub(r'\s*!! ERROR:.*', '', raw_lines[-1])
+                        
+                    editor.setSel(editor.positionFromLine(i), editor.getLineEndPosition(i))
+                    editor.replaceSel(clean_last)
+                else:
+                    new_code = ResultFormatter.format(parsed, result, actual_formula, engine)
+                    editor.setSel(editor.positionFromLine(i), editor.getLineEndPosition(i))
+                    editor.replaceSel(new_code + parsed["comment_str"])
 
             except Exception as e:
                 # Fallback для конструкций вроде import, print, list.append
                 if not parsed["var_part"] and not parsed["is_inspector"]:
                      try:
                          engine.execute_raw(parsed["raw_formula"])
-                         editor.setSel(editor.positionFromLine(i), editor.getLineEndPosition(i))
-                         editor.replaceSel(parsed["core_line"] + parsed["comment_str"])
+                         if is_multiline:
+                             last_line_parsed = CodeParser.parse(raw_lines[-1])
+                             if last_line_parsed:
+                                 clean_last = last_line_parsed["code_part"] + last_line_parsed["comment_str"]
+                             else:
+                                 clean_last = re.sub(r'\s*!! ERROR:.*', '', raw_lines[-1])
+                             editor.setSel(editor.positionFromLine(i), editor.getLineEndPosition(i))
+                             editor.replaceSel(clean_last)
+                         else:
+                             editor.setSel(editor.positionFromLine(i), editor.getLineEndPosition(i))
+                             editor.replaceSel(parsed["core_line"] + parsed["comment_str"])
+                         i += 1
                          continue
                      except Exception as fallback_err: 
-                         # Перезаписываем первоначальный SyntaxError реальной ошибкой выполнения
                          e = fallback_err 
                 
+                # Ошибка всегда пишется только в последнюю строку проблемного блока
+                target_line_text = raw_lines[-1]
+                target_parsed = CodeParser.parse(target_line_text)
+                if target_parsed:
+                     # Адаптация для Python 2: замена f-строки на .format()
+                     error_str = target_parsed["code_part"] + " !! ERROR: {}".format(str(e)) + target_parsed["comment_str"]
+                else:
+                     clean_raw = re.sub(r'\s*!! ERROR:.*', '', target_line_text)
+                     # Адаптация для Python 2: замена f-строки на .format()
+                     error_str = clean_raw + " !! ERROR: {}".format(str(e))
+                     
                 editor.setSel(editor.positionFromLine(i), editor.getLineEndPosition(i))
-                editor.replaceSel(parsed["code_part"] + " !! ERROR: {}".format(str(e)) + parsed["comment_str"]) 
- 
+                editor.replaceSel(error_str) 
+
+            i += 1 # Сдвиг указателя на следующую физическую строку после блока
+
         # Smart Output: Вывод таблиц
         last_out_line = end_line
         while last_out_line + 1 < editor.getLineCount() and editor.getLine(last_out_line + 1).startswith("# >"):

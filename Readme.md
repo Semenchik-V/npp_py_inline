@@ -42,7 +42,25 @@ _end_
 
 ```
 
-**Example 2: Working with collections and modules**
+Example 2: Using long strings
+A backslash allows you to break a long string into several shorter lines.
+```python
+_beg_
+a = 1.1
+b = 2.1
+c = 3.1
+d = (sin(a+b)- cos(a-b))*2 + (sin(a+c)- cos(a-c))*3 + (sin(a+c)- cos(a-c))*2
+d ? -3.474498
+
+e = (sin(a+b)- cos(a-b))*2 \
+  + (sin(a+c)- cos(a-c))*3 + \
+(sin(a+c)- cos(a-c))*2
+e ? -3.474498
+_end_
+```
+
+
+**Example 3: Working with collections and modules**
 Element-wise multiplication of randomly generated lists.
 
 ```python
