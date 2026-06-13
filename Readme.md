@@ -41,7 +41,12 @@ _end_
 ```
 
 ## Documentation
-A detailed description of all features is available in **[MANUAL.md](MANUAL.md)**.
+A detailed description of all features is available in **[MANUAL.md](MANUAL.md)**
+
+## Project Status
+✅ All planned functionality has been implemented.  
+🔧 The author fixes bugs but does not add new features.  
+🤝 Pull Requests with reasonable enhancements are welcome.
 
 ## 📝 License
 The project is distributed under the MIT License. See the LICENSE file for details. You are free to use, modify, and distribute this code.
