@@ -2,6 +2,8 @@
 ## NppPyInline: Calculator and Python right inside Notepad++
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
+[Readme.ru](./Readme.ru.md)
+
 **NppPyInline** is a Python runtime environment right inside Notepad++. You write code in the Notepad++ text editor between `_beg_` and `_end_` markers and run it with a single command. Calculation results appear on the same lines or at the end of the block.
 
 This is not a replacement for a full-fledged IDE. It's a tool for quick scenarios where you don't want to switch to a console, open Jupyter Notebook, or write a separate `.py` file.
